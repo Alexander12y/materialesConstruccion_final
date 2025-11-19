@@ -60,7 +60,7 @@ $current_page = 'perfil';
             <h1 class="display-5 fw-bold">
                 <i class="bi bi-person-circle"></i> Mi Perfil
             </h1>
-            <p class="lead">Administra tu información personal y consulta tus pedidos</p>
+            <p class="lead">Consulta tu informacion personal e historial de pedidos!</p>
         </div>
     </div>
 
