@@ -1,0 +1,217 @@
+<?php
+session_start();
+
+// Datos de ejemplo del usuario
+$usuario = [
+    'id_usuario' => '1',
+    'nombre' => 'Juan Pérez',
+    'email' => 'juan.perez@example.com',
+    'contrasena' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    'fecha_nacimiento' => '1995-03-15',
+    'tarjeta_terminacion' => '****4532',
+    'direccion_postal' => 'Calle Principal #123, Col. Centro, Ciudad de México, CP 01000'
+];
+
+// Pedidos recientes (ejemplo)
+$pedidos = [
+    [
+        'id' => '001',
+        'fecha' => '10 Nov 2025',
+        'total' => 1250.50,
+        'estado' => 'Entregado',
+        'clase_badge' => 'success'
+    ],
+    [
+        'id' => '002',
+        'fecha' => '15 Nov 2025',
+        'total' => 850.00,
+        'estado' => 'En camino',
+        'clase_badge' => 'warning'
+    ],
+    [
+        'id' => '003',
+        'fecha' => '17 Nov 2025',
+        'total' => 2100.75,
+        'estado' => 'Procesando',
+        'clase_badge' => 'info'
+    ]
+];
+
+$current_page = 'perfil';
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - WigerConstruction</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <?php include 'components/navbar.php'; ?>
+
+    <!-- Header -->
+    <div class="bg-light py-4">
+        <div class="container">
+            <h1 class="display-5 fw-bold">
+                <i class="bi bi-person-circle"></i> Mi Perfil
+            </h1>
+            <p class="lead">Administra tu información personal y consulta tus pedidos</p>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="container mt-4 mb-5">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 mb-4">
+                <div class="list-group">
+                    <a href="#datos-personales" class="list-group-item list-group-item-action active">
+                        <i class="bi bi-person"></i> Datos Personales
+                    </a>
+                    <a href="#mis-pedidos" class="list-group-item list-group-item-action">
+                        <i class="bi bi-box-seam"></i> Mis Pedidos
+                    </a>
+                    <a href="#direcciones" class="list-group-item list-group-item-action">
+                        <i class="bi bi-geo-alt"></i> Direcciones
+                    </a>
+                    <a href="#configuracion" class="list-group-item list-group-item-action">
+                        <i class="bi bi-gear"></i> Configuración
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action text-danger">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+
+            <!-- Contenido -->
+            <div class="col-md-9">
+                <!-- Datos Personales -->
+                <div id="datos-personales" class="card mb-4 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-person"></i> Información Personal</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Nombre Completo:</label>
+                                <input type="text" class="form-control" value="<?php echo $usuario['nombre']; ?>" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Correo Electrónico:</label>
+                                <input type="email" class="form-control" value="<?php echo $usuario['email']; ?>" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Fecha de Nacimiento:</label>
+                                <input type="date" class="form-control" value="<?php echo $usuario['fecha_nacimiento']; ?>" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Tarjeta Bancaria:</label>
+                                <input type="text" class="form-control" value="<?php echo $usuario['tarjeta_terminacion']; ?>" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Dirección Postal:</label>
+                                <textarea class="form-control" rows="2" readonly><?php echo $usuario['direccion_postal']; ?></textarea>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label fw-bold">ID de Usuario:</label>
+                                <input type="text" class="form-control" value="#<?php echo $usuario['id_usuario']; ?>" readonly>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary">
+                            <i class="bi bi-pencil"></i> Editar Información
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mis Pedidos -->
+                <div id="mis-pedidos" class="card mb-4 shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-box-seam"></i> Pedidos Recientes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Pedido #</th>
+                                        <th>Fecha</th>
+                                        <th>Total</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($pedidos as $pedido): ?>
+                                    <tr>
+                                        <td><strong>#<?php echo $pedido['id']; ?></strong></td>
+                                        <td><?php echo $pedido['fecha']; ?></td>
+                                        <td>$<?php echo number_format($pedido['total'], 2); ?></td>
+                                        <td>
+                                            <span class="badge bg-<?php echo $pedido['clase_badge']; ?>">
+                                                <?php echo $pedido['estado']; ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i> Ver
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estadísticas Rápidas -->
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-center shadow-sm">
+                            <div class="card-body">
+                                <i class="bi bi-cart-check display-4 text-primary"></i>
+                                <h3 class="mt-2">15</h3>
+                                <p class="text-muted">Pedidos Totales</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-center shadow-sm">
+                            <div class="card-body">
+                                <i class="bi bi-currency-dollar display-4 text-success"></i>
+                                <h3 class="mt-2">$12,450</h3>
+                                <p class="text-muted">Total Gastado</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-center shadow-sm">
+                            <div class="card-body">
+                                <i class="bi bi-star-fill display-4 text-warning"></i>
+                                <h3 class="mt-2">Premium</h3>
+                                <p class="text-muted">Estado de Cuenta</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php include 'components/footer.php'; ?>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

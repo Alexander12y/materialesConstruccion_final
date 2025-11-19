@@ -1,0 +1,15 @@
+# Variables de entorno sensibles
+.env
+.env.local
+.env.production
+
+# Volúmenes de Docker
+mysql_data/
+
+# Archivos temporales
+*.tmp
+*.log
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
