@@ -1,81 +1,848 @@
-/* Estilos personalizados para MaterialesPro */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Roboto+Condensed:wght@700&display=swap');
 
 :root {
-    --primary-color: #0d6efd;
+   
+    --construction-green: #198754;
+    --construction-green-dark: #146c43;
+    --construction-green-light: #20c997;
+    
+    --construction-orange: #fd7e14;
+    --construction-orange-dark: #dc6502;
+    
+    --construction-gray: #6c757d;
+    --construction-gray-dark: #495057;
+    --construction-gray-light: #adb5bd;
+    
+    --construction-concrete: #e9ecef;
+    --construction-steel: #495057;
+    --construction-cement: #dee2e6;
+    
+    /* Colores de estado */
+    --primary-color: #198754;
     --secondary-color: #6c757d;
     --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #fd7e14;
+    --info-color: #0dcaf0;
     --dark-color: #212529;
+    --light-color: #f8f9fa;
+    
+    /* Tipografía */
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-headings: 'Roboto Condensed', 'Inter', sans-serif;
+    
+    /* Espaciado */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+    
+    /* Bordes */
+    --border-radius: 0.5rem;
+    --border-radius-lg: 1rem;
+    --border-radius-sm: 0.25rem;
+    
+    /* Sombras - Efecto industrial */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.18);
+    
+    /* Transiciones */
+    --transition-fast: 0.15s ease;
+    --transition-base: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+/* Reset y base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--font-primary);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--dark-color);
+    background-color: #ffffff;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Navbar personalizada */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-headings);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--dark-color);
+    margin-bottom: var(--spacing-md);
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.75rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1rem; }
+
+p {
+    margin-bottom: var(--spacing-md);
+}
+
+a {
+    color: var(--construction-green);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: var(--construction-green-dark);
+}
+
+/* Contenedor principal */
+main {
+    flex: 1;
+}
+
+
+.navbar {
+    background: linear-gradient(135deg, #212529 0%, #343a40 100%) !important;
+    box-shadow: var(--shadow-md);
+    border-bottom: 3px solid var(--construction-green);
+    padding: 0.75rem 0;
+}
+
 .navbar-brand {
-    font-weight: bold;
+    font-family: var(--font-headings);
+    font-weight: 900;
     font-size: 1.5rem;
+    letter-spacing: 0.5px;
+    color: #ffffff !important;
+    transition: all var(--transition-base);
+    text-transform: uppercase;
+}
+
+.navbar-brand:hover {
+    color: var(--construction-green-light) !important;
+    transform: translateX(3px);
 }
 
 .navbar-brand i {
-    color: #ffc107;
+    color: var(--construction-orange);
+    font-size: 1.8rem;
+    margin-right: 0.5rem;
+    animation: pulse 2s infinite;
 }
 
-/* Cards de productos */
-.card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.nav-link {
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem !important;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background: var(--construction-green);
+    transition: width var(--transition-base);
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+    width: 80%;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--construction-green-light) !important;
+}
+
+.nav-link.active {
+    background-color: rgba(25, 135, 84, 0.15);
+    color: var(--construction-green-light) !important;
+}
+
+.dropdown-menu {
     border: none;
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--border-radius);
+    margin-top: 0.5rem;
 }
 
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+.dropdown-item {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
 }
 
-.card-img-top {
-    height: 200px;
-    object-fit: cover;
-    background-color: #f8f9fa;
+.dropdown-item:hover {
+    background-color: var(--construction-concrete);
+    color: var(--construction-green);
+    padding-left: 2rem;
 }
 
-/* Botones */
+
 .btn {
-    transition: all 0.3s ease;
+    font-family: var(--font-primary);
+    font-weight: 600;
+    padding: 0.625rem 1.5rem;
+    border-radius: var(--border-radius);
+    border: 2px solid transparent;
+    transition: all var(--transition-base);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.875rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--construction-green) 0%, var(--construction-green-dark) 100%);
+    border-color: var(--construction-green);
+}
+
+.btn-success:hover {
+    background: var(--construction-green-dark);
+    border-color: var(--construction-green-dark);
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
+}
+
+.btn-outline-success {
+    color: var(--construction-green);
+    border-color: var(--construction-green);
+    background: transparent;
+}
+
+.btn-outline-success:hover {
+    background: var(--construction-green);
+    border-color: var(--construction-green);
+    color: #ffffff;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--construction-orange) 0%, var(--construction-orange-dark) 100%);
+    border-color: var(--construction-orange);
+    color: #ffffff;
+}
+
+.btn-warning:hover {
+    background: var(--construction-orange-dark);
+    box-shadow: 0 4px 12px rgba(253, 126, 20, 0.4);
+}
+
+.btn-lg {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+}
+
+.card {
+    border: none;
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
+    background: #ffffff;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--construction-green) 0%, var(--construction-green-dark) 100%);
+    color: #ffffff;
+    font-weight: 700;
+    padding: 1rem 1.5rem;
+    border-bottom: 3px solid var(--construction-green-dark);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    background-color: var(--construction-concrete);
+    border-top: 1px solid var(--construction-cement);
+    padding: 1rem 1.5rem;
+}
+
+.card-title {
+    font-family: var(--font-headings);
+    font-weight: 700;
+    color: var(--dark-color);
+    margin-bottom: var(--spacing-sm);
+}
+
+.card-img-top {
+    height: 220px;
+    object-fit: cover;
+    background: linear-gradient(135deg, var(--construction-concrete) 0%, var(--construction-cement) 100%);
+    transition: transform var(--transition-base);
+}
+
+.card:hover .card-img-top {
     transform: scale(1.05);
 }
 
-/* Footer */
-footer {
-    margin-top: auto;
+
+.badge {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-/* Perfil de Usuario */
+.badge.bg-success {
+    background: linear-gradient(135deg, var(--construction-green) 0%, var(--construction-green-dark) 100%) !important;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, var(--construction-orange) 0%, var(--construction-orange-dark) 100%) !important;
+}
+
+.badge.bg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+}
+
+/* ========================================
+   FOOTER - Diseño sólido
+   ======================================== */
+footer {
+    margin-top: auto;
+    background: linear-gradient(135deg, #212529 0%, #343a40 100%);
+    color: #ffffff;
+    padding: 2rem 0;
+    border-top: 3px solid var(--construction-green);
+}
+
+footer a {
+    color: var(--construction-green-light);
+}
+
+footer a:hover {
+    color: var(--construction-orange);
+}
+
+/* ========================================
+   FORMULARIOS - Diseño robusto
+   ======================================== */
+.form-label {
+    font-weight: 600;
+    color: var(--construction-steel);
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.95rem;
+}
+
+.form-control,
+.form-select {
+    border: 2px solid var(--construction-cement);
+    border-radius: var(--border-radius);
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all var(--transition-base);
+    background-color: #ffffff;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--construction-green);
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
+    background-color: #ffffff;
+}
+
+.form-control::placeholder {
+    color: var(--construction-gray-light);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.input-group {
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.input-group-text {
+    background-color: var(--construction-concrete);
+    border: 2px solid var(--construction-cement);
+    border-right: none;
+    font-weight: 600;
+    color: var(--construction-steel);
+}
+
+/* ========================================
+   ALERTS - Notificaciones industriales
+   ======================================== */
+.alert {
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 1rem 1.5rem;
+    margin-bottom: var(--spacing-lg);
+    border-left: 4px solid;
+    box-shadow: var(--shadow-sm);
+    font-weight: 500;
+}
+
+.alert-success {
+    background-color: rgba(25, 135, 84, 0.1);
+    border-left-color: var(--construction-green);
+    color: var(--construction-green-dark);
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-left-color: var(--danger-color);
+    color: #c82333;
+}
+
+.alert-warning {
+    background-color: rgba(253, 126, 20, 0.1);
+    border-left-color: var(--construction-orange);
+    color: var(--construction-orange-dark);
+}
+
+.alert-info {
+    background-color: rgba(13, 202, 240, 0.1);
+    border-left-color: var(--info-color);
+    color: #0a8cb8;
+}
+
+.alert i {
+    font-size: 1.25rem;
+    margin-right: 0.5rem;
+}
+
+/* ========================================
+   TABLAS - Diseño industrial
+   ======================================== */
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, var(--construction-green) 0%, var(--construction-green-dark) 100%);
+    color: #ffffff;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+    border: none;
+}
+
+.table tbody tr {
+    transition: all var(--transition-fast);
+    border-bottom: 1px solid var(--construction-cement);
+}
+
+.table tbody tr:hover {
+    background-color: rgba(25, 135, 84, 0.05);
+    transform: scale(1.01);
+    box-shadow: var(--shadow-sm);
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.table-responsive {
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+/* ========================================
+   LISTAS - Diseño mejorado
+   ======================================== */
 .list-group-item {
-    border-left: 3px solid transparent;
-    transition: all 0.3s ease;
+    border: 1px solid var(--construction-cement);
+    border-left: 4px solid transparent;
+    transition: all var(--transition-base);
+    padding: 1rem 1.5rem;
+    margin-bottom: var(--spacing-sm);
+    border-radius: var(--border-radius);
+    background-color: #ffffff;
 }
 
 .list-group-item:hover {
-    border-left-color: var(--primary-color);
-    background-color: #f8f9fa;
+    border-left-color: var(--construction-green);
+    background-color: rgba(25, 135, 84, 0.05);
+    transform: translateX(5px);
+    box-shadow: var(--shadow-sm);
 }
 
 .list-group-item.active {
-    border-left-color: var(--primary-color);
-    background-color: var(--primary-color);
+    border-left-color: var(--construction-green);
+    background: linear-gradient(135deg, var(--construction-green) 0%, var(--construction-green-dark) 100%);
+    color: #ffffff;
+    border-color: var(--construction-green);
 }
 
-/* Animaciones */
+.list-group-item i {
+    margin-right: var(--spacing-sm);
+    color: var(--construction-green);
+}
+
+.list-group-item.active i {
+    color: #ffffff;
+}
+
+/* ========================================
+   SECCIONES HERO - Impacto visual
+   ======================================== */
+.hero-section {
+    position: relative;
+    background: linear-gradient(135deg, var(--construction-green) 0%, var(--construction-green-dark) 100%);
+    padding: 5rem 0;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.05) 35px, rgba(255,255,255,.05) 70px),
+        repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(0,0,0,.05) 35px, rgba(0,0,0,.05) 70px);
+    opacity: 0.5;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-title {
+    font-family: var(--font-headings);
+    font-weight: 900;
+    font-size: 3.5rem;
+    line-height: 1.1;
+    color: #ffffff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    margin-bottom: var(--spacing-lg);
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.6;
+    margin-bottom: var(--spacing-xl);
+}
+
+.hero-btn {
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    border-radius: 50px;
+}
+
+/* ========================================
+   CATEGORY CARDS - Tarjetas de categoría
+   ======================================== */
+.category-card {
+    cursor: pointer;
+}
+
+.category-card:hover {
+    transform: translateY(-10px);
+}
+
+.category-icon {
+    font-size: 3rem;
+    color: var(--construction-green);
+    margin-bottom: var(--spacing-md);
+}
+
+.category-badge {
+    background: var(--construction-green);
+    color: #ffffff;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    display: inline-block;
+}
+
+/* ========================================
+   PRODUCT CARDS - Tarjetas de productos
+   ======================================== */
+.product-card {
+    overflow: hidden;
+}
+
+.product-image {
+    background: linear-gradient(135deg, var(--construction-concrete) 0%, var(--construction-cement) 100%);
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: var(--construction-green);
+    transition: transform var(--transition-base);
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+.product-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--construction-green);
+}
+
+.product-stock {
+    font-size: 0.85rem;
+    color: var(--construction-gray);
+}
+
+.btn-add-cart {
+    border-radius: 50px;
+    padding: 10px 30px;
+    font-weight: 600;
+}
+
+/* ==========================
+   Estilos del Carrito
+   ========================== */
+
+.cart-item {
+    transition: background-color var(--transition-base);
+}
+
+.cart-item:hover {
+    background-color: var(--construction-concrete);
+}
+
+.cart-item-image {
+    background: linear-gradient(135deg, var(--construction-concrete) 0%, var(--construction-cement) 100%);
+    border-radius: var(--border-radius);
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--construction-green);
+}
+
+.product-image-large {
+    background: linear-gradient(135deg, var(--construction-concrete) 0%, var(--construction-cement) 100%);
+    border-radius: var(--border-radius);
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10rem;
+    color: var(--construction-green);
+}
+
+/* Estilos para imágenes reales de productos */
+.product-image-real {
+    background: var(--light-color);
+    height: 200px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.product-image-real img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-base);
+}
+
+.product-card:hover .product-image-real img {
+    transform: scale(1.05);
+}
+
+.product-image-large-real {
+    background: var(--light-color);
+    border-radius: var(--border-radius);
+    height: 400px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-image-large-real img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: var(--spacing-md);
+}
+
+.cart-item-image-real {
+    background: var(--light-color);
+    border-radius: var(--border-radius-sm);
+    height: 80px;
+    width: 80px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart-item-image-real img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mini-cart-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--border-radius-sm);
+}
+
+/* ==========================
+   Mini Carrito (Offcanvas)
+   ========================== */
+
+.mini-cart-items {
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+}
+
+.mini-cart-item {
+    transition: background-color var(--transition-base);
+}
+
+.mini-cart-item:hover {
+    background-color: var(--construction-concrete);
+}
+
+.mini-cart-item-image {
+    background: linear-gradient(135deg, var(--construction-concrete) 0%, var(--construction-cement) 100%);
+    border-radius: var(--border-radius-sm);
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--construction-green);
+}
+
+.offcanvas {
+    width: 400px !important;
+}
+
+@media (max-width: 576px) {
+    .offcanvas {
+        width: 85% !important;
+    }
+}
+
+/* ==========================
+   Secciones
+   ========================== */
+
+section {
+    padding: var(--spacing-xxl) 0;
+}
+
+.section-title {
+    font-family: var(--font-headings);
+    font-weight: 900;
+    font-size: 2.5rem;
+    color: var(--dark-color);
+    margin-bottom: var(--spacing-md);
+    position: relative;
+    display: inline-block;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--construction-green) 0%, var(--construction-orange) 100%);
+    border-radius: 2px;
+}
+
+.section-subtitle {
+    font-size: 1.125rem;
+    color: var(--construction-gray);
+    line-height: 1.6;
+    margin-bottom: var(--spacing-xl);
+}
+
+.bg-light {
+    background-color: var(--construction-concrete) !important;
+}
+
+
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(30px);
     }
     to {
         opacity: 1;
@@ -83,52 +850,301 @@ footer {
     }
 }
 
-.card, .list-group-item {
-    animation: fadeIn 0.5s ease-out;
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
-/* Badges personalizados */
-.badge {
-    padding: 0.5em 0.8em;
-    font-weight: 500;
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
-/* Responsive adjustments */
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-left {
+    animation: slideInLeft 0.6s ease-out;
+}
+
+.animate-slide-right {
+    animation: slideInRight 0.6s ease-out;
+}
+
+.animate-scale {
+    animation: scaleIn 0.6s ease-out;
+}
+
+
+.bg-construction-gradient {
+    background: linear-gradient(135deg, var(--construction-green) 0%, var(--construction-green-dark) 100%);
+}
+
+.bg-dark-gradient {
+    background: linear-gradient(135deg, #212529 0%, #343a40 100%);
+}
+
+.text-construction-green {
+    color: var(--construction-green) !important;
+}
+
+.text-construction-orange {
+    color: var(--construction-orange) !important;
+}
+
+.border-construction {
+    border-color: var(--construction-green) !important;
+}
+
+.shadow-construction {
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.2) !important;
+}
+
+/* Separadores decorativos */
+.divider {
+    height: 3px;
+    background: linear-gradient(90deg, var(--construction-green) 0%, var(--construction-orange) 100%);
+    margin: var(--spacing-xl) 0;
+    border-radius: 2px;
+}
+
+/* Iconos destacados */
+.icon-construction {
+    width: 60px;
+    height: 60px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--construction-green) 0%, var(--construction-green-dark) 100%);
+    color: #ffffff;
+    border-radius: 50%;
+    font-size: 1.75rem;
+    margin-bottom: var(--spacing-md);
+    box-shadow: var(--shadow-md);
+}
+
+/* Números destacados / Estadísticas */
+.stat-number {
+    font-family: var(--font-headings);
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--construction-green);
+    line-height: 1;
+    margin-bottom: var(--spacing-sm);
+}
+
+.stat-label {
+    font-size: 0.95rem;
+    color: var(--construction-gray);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* Testimonios / Citas */
+.quote {
+    border-left: 4px solid var(--construction-green);
+    padding-left: var(--spacing-lg);
+    font-style: italic;
+    color: var(--construction-gray-dark);
+    margin: var(--spacing-xl) 0;
+}
+
+/* ========================================
+   RESPONSIVE - Adaptación móvil
+   ======================================== */
+@media (max-width: 992px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+    }
+}
+
 @media (max-width: 768px) {
+    :root {
+        --spacing-xxl: 2rem;
+    }
+    
     .navbar-brand {
         font-size: 1.2rem;
     }
     
-    .display-5 {
+    .navbar-brand i {
+        font-size: 1.4rem;
+    }
+    
+    .hero-title {
         font-size: 2rem;
     }
     
-    .lead {
+    .hero-subtitle {
         font-size: 1rem;
+    }
+    
+    .section-title {
+        font-size: 1.75rem;
+    }
+    
+    .section-subtitle {
+        font-size: 1rem;
+    }
+    
+    .card-img-top {
+        height: 180px;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.75rem; }
+    h3 { font-size: 1.5rem; }
+    h4 { font-size: 1.25rem; }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    section {
+        padding: var(--spacing-xl) 0;
     }
 }
 
-/* Tabla responsive */
-.table-responsive {
-    border-radius: 0.5rem;
+@media (max-width: 576px) {
+    .hero-title {
+        font-size: 1.75rem;
+    }
+    
+    .card:hover {
+        transform: translateY(-4px);
+    }
+    
+    .table {
+        font-size: 0.875rem;
+    }
 }
 
-.table thead {
-    background-color: #f8f9fa;
-}
-
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-    cursor: pointer;
-}
-
-/* Input groups */
-.input-group .form-control:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-}
-
-/* Scroll suave */
+/* ========================================
+   SCROLL & INTERACCIONES
+   ======================================== */
 html {
     scroll-behavior: smooth;
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--construction-concrete);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--construction-green);
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--construction-green-dark);
+}
+
+/* Focus visible mejorado para accesibilidad */
+*:focus-visible {
+    outline: 2px solid var(--construction-green);
+    outline-offset: 2px;
+}
+
+/* Loading spinner */
+.spinner-construction {
+    border: 3px solid var(--construction-concrete);
+    border-top: 3px solid var(--construction-green);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========================================
+   IMÁGENES Y MEDIA
+   ======================================== */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.img-construction {
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    transition: transform var(--transition-base);
+}
+
+.img-construction:hover {
+    transform: scale(1.02);
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+@media print {
+    .navbar,
+    .footer,
+    .btn,
+    .alert {
+        display: none !important;
+    }
+    
+    body {
+        font-size: 12pt;
+        color: #000;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+    }
 }

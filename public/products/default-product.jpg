@@ -1,0 +1,9 @@
+<!-- Placeholder para imagen por defecto - crear una imagen SVG simple -->
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#e9ecef"/>
+  <text x="50%" y="50%" font-family="Arial" font-size="24" fill="#6c757d" text-anchor="middle" dominant-baseline="middle">
+    Imagen no disponible
+  </text>
+  <path d="M150 180 L150 220 L170 200 Z" fill="#6c757d"/>
+  <circle cx="190" cy="190" r="40" stroke="#6c757d" stroke-width="3" fill="none"/>
+</svg>

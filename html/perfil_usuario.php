@@ -1,18 +1,31 @@
 <?php
 session_start();
+require_once 'config/database.php';
 
-// Datos de ejemplo del usuario
-$usuario = [
-    'id_usuario' => '1',
-    'nombre' => 'Juan Pérez',
-    'email' => 'juan.perez@example.com',
-    'contrasena' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    'fecha_nacimiento' => '1995-03-15',
-    'tarjeta_terminacion' => '****4532',
-    'direccion_postal' => 'Calle Principal #123, Col. Centro, Ciudad de México, CP 01000'
-];
+// Verificar que el usuario esté autenticado
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit();
+}
 
-// Pedidos recientes (ejemplo)
+// Obtener datos del usuario desde la base de datos
+$usuario = getUserById($_SESSION['user_id']);
+
+if (!$usuario) {
+    // Si no se encuentra el usuario, cerrar sesión y redirigir
+    session_destroy();
+    header('Location: login.php');
+    exit();
+}
+
+// Formatear fecha de nacimiento para mejor presentación
+$fecha_nacimiento_formateada = 'No especificada';
+if ($usuario['Fecha_Nacimiento']) {
+    $fecha_obj = new DateTime($usuario['Fecha_Nacimiento']);
+    $fecha_nacimiento_formateada = $fecha_obj->format('d/m/Y');
+}
+
+// Pedidos recientes (ejemplo - esto se conectará a la BD más adelante)
 $pedidos = [
     [
         'id' => '001',
@@ -38,6 +51,17 @@ $pedidos = [
 ];
 
 $current_page = 'perfil';
+
+// Mensajes de éxito
+$success = '';
+if (isset($_SESSION['registro_exitoso'])) {
+    $success = $_SESSION['registro_exitoso'];
+    unset($_SESSION['registro_exitoso']);
+}
+if (isset($_SESSION['update_success'])) {
+    $success = $_SESSION['update_success'];
+    unset($_SESSION['update_success']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -53,6 +77,7 @@ $current_page = 'perfil';
 </head>
 <body>
     <?php include 'components/navbar.php'; ?>
+    <?php include 'components/mini_cart.php'; ?>
 
     <!-- Header -->
     <div class="bg-light py-4">
@@ -60,12 +85,18 @@ $current_page = 'perfil';
             <h1 class="display-5 fw-bold">
                 <i class="bi bi-person-circle"></i> Mi Perfil
             </h1>
-            <p class="lead">Consulta tu informacion personal e historial de pedidos!</p>
+            <p class="lead">Consulta tu información personal e historial de pedidos!</p>
         </div>
     </div>
 
     <!-- Contenido Principal -->
     <div class="container mt-4 mb-5">
+        <?php if ($success): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle"></i> <?php echo htmlspecialchars($success); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
         <div class="row">
             <!-- Sidebar -->
             <div class="col-md-3 mb-4">
@@ -79,10 +110,13 @@ $current_page = 'perfil';
                     <a href="#direcciones" class="list-group-item list-group-item-action">
                         <i class="bi bi-geo-alt"></i> Direcciones
                     </a>
+                    <a href="cambiar_contrasena.php" class="list-group-item list-group-item-action">
+                        <i class="bi bi-shield-lock"></i> Cambiar Contraseña
+                    </a>
                     <a href="#configuracion" class="list-group-item list-group-item-action">
                         <i class="bi bi-gear"></i> Configuración
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action text-danger">
+                    <a href="auth/logout.php" class="list-group-item list-group-item-action text-danger">
                         <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
                     </a>
                 </div>
@@ -99,38 +133,38 @@ $current_page = 'perfil';
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Nombre Completo:</label>
-                                <input type="text" class="form-control" value="<?php echo $usuario['nombre']; ?>" readonly>
+                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($usuario['Nombre_Usuario']); ?>" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Correo Electrónico:</label>
-                                <input type="email" class="form-control" value="<?php echo $usuario['email']; ?>" readonly>
+                                <input type="email" class="form-control" value="<?php echo htmlspecialchars($usuario['Correo_Electronico']); ?>" readonly>
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Fecha de Nacimiento:</label>
-                                <input type="date" class="form-control" value="<?php echo $usuario['fecha_nacimiento']; ?>" readonly>
+                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($fecha_nacimiento_formateada); ?>" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Tarjeta Bancaria:</label>
-                                <input type="text" class="form-control" value="<?php echo $usuario['tarjeta_terminacion']; ?>" readonly>
+                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($usuario['Numero_Tarjeta_Bancaria'] ?? 'No especificada'); ?>" readonly>
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-12">
                                 <label class="form-label fw-bold">Dirección Postal:</label>
-                                <textarea class="form-control" rows="2" readonly><?php echo $usuario['direccion_postal']; ?></textarea>
+                                <textarea class="form-control" rows="2" readonly><?php echo htmlspecialchars($usuario['Direccion_Postal'] ?? 'No especificada'); ?></textarea>
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-12">
                                 <label class="form-label fw-bold">ID de Usuario:</label>
-                                <input type="text" class="form-control" value="#<?php echo $usuario['id_usuario']; ?>" readonly>
+                                <input type="text" class="form-control" value="#<?php echo htmlspecialchars($usuario['ID_Usuario']); ?>" readonly>
                             </div>
                         </div>
-                        <button class="btn btn-primary">
+                        <a href="editar_perfil.php" class="btn btn-primary">
                             <i class="bi bi-pencil"></i> Editar Información
-                        </button>
+                        </a>
                     </div>
                 </div>
 

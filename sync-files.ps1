@@ -12,8 +12,12 @@ if (-not $containerStatus) {
 }
 
 # Copiar todos los archivos de la carpeta html
-Write-Host "Copiando archivos..."
+Write-Host "Copiando archivos HTML..."
 docker cp html/. materialesconstruccion_final-web-1:/var/www/html/
+
+# Copiar las imágenes de productos
+Write-Host "Copiando imágenes de productos..."
+docker cp public/. materialesconstruccion_final-web-1:/var/www/html/public/
 
 # Establecer permisos correctos
 Write-Host "Estableciendo permisos..."
