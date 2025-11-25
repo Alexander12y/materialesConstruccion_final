@@ -206,12 +206,21 @@ unset($_SESSION['cart_message'], $_SESSION['cart_message_type']);
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button class="btn btn-success btn-lg" disabled>
-                                <i class="bi bi-credit-card"></i> Proceder al Pago
-                            </button>
+                            <?php if ($isGuest): ?>
+                            <a href="login.php" class="btn btn-success btn-lg">
+                                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión para Pagar
+                            </a>
                             <small class="text-muted text-center">
-                                <i class="bi bi-info-circle"></i> Funcionalidad de pago próximamente
+                                <i class="bi bi-info-circle"></i> Debes iniciar sesión para completar tu compra
                             </small>
+                            <?php else: ?>
+                            <a href="checkout.php" class="btn btn-success btn-lg">
+                                <i class="bi bi-credit-card"></i> Proceder al Pago
+                            </a>
+                            <small class="text-muted text-center">
+                                <i class="bi bi-shield-check"></i> Pago 100% seguro y protegido
+                            </small>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div class="card-footer bg-light">

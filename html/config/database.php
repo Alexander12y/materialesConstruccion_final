@@ -352,8 +352,8 @@ function createProduct($data) {
     }
     
     try {
-        $sql = "INSERT INTO Productos (Nombre_Producto, Descripcion, Precio, Cantidad_Disponible, Categoria) 
-                VALUES (:nombre, :descripcion, :precio, :cantidad, :categoria)";
+        $sql = "INSERT INTO Productos (Nombre, Descripcion, Precio, Cantidad_Almacen, Fabricante, Origen, ID_Categoria_FK) 
+                VALUES (:nombre, :descripcion, :precio, :cantidad, :fabricante, :origen, :categoria)";
         
         $stmt = $conn->prepare($sql);
         $result = $stmt->execute([
@@ -361,7 +361,9 @@ function createProduct($data) {
             'descripcion' => $data['descripcion'] ?? null,
             'precio' => $data['precio'],
             'cantidad' => $data['cantidad'],
-            'categoria' => $data['categoria'] ?? null
+            'fabricante' => $data['fabricante'] ?? null,
+            'origen' => $data['origen'] ?? null,
+            'categoria' => !empty($data['categoria']) ? $data['categoria'] : null
         ]);
         
         if ($result) {
@@ -389,11 +391,13 @@ function updateProduct($productId, $data) {
     
     try {
         $sql = "UPDATE Productos SET 
-                Nombre_Producto = :nombre,
+                Nombre = :nombre,
                 Descripcion = :descripcion,
                 Precio = :precio,
-                Cantidad_Disponible = :cantidad,
-                Categoria = :categoria
+                Cantidad_Almacen = :cantidad,
+                Fabricante = :fabricante,
+                Origen = :origen,
+                ID_Categoria_FK = :categoria
                 WHERE ID_Producto = :id";
         
         $stmt = $conn->prepare($sql);
@@ -402,7 +406,9 @@ function updateProduct($productId, $data) {
             'descripcion' => $data['descripcion'] ?? null,
             'precio' => $data['precio'],
             'cantidad' => $data['cantidad'],
-            'categoria' => $data['categoria'] ?? null,
+            'fabricante' => $data['fabricante'] ?? null,
+            'origen' => $data['origen'] ?? null,
+            'categoria' => !empty($data['categoria']) ? $data['categoria'] : null,
             'id' => $productId
         ]);
         
@@ -414,6 +420,46 @@ function updateProduct($productId, $data) {
     } catch (PDOException $e) {
         error_log("Error al actualizar producto: " . $e->getMessage());
         return ['success' => false, 'message' => 'Error al actualizar producto'];
+    }
+}
+
+/**
+ * Eliminar un producto
+ * @param int $productId ID del producto
+ * @return array ['success' => bool, 'message' => string]
+ */
+function deleteProduct($productId) {
+    $conn = getDBConnection();
+    if (!$conn) {
+        return ['success' => false, 'message' => 'Error de conexión a la base de datos'];
+    }
+    
+    try {
+        // Verificar si el producto existe
+        $stmt = $conn->prepare("SELECT Nombre FROM Productos WHERE ID_Producto = :id");
+        $stmt->execute(['id' => $productId]);
+        $producto = $stmt->fetch();
+        
+        if (!$producto) {
+            return ['success' => false, 'message' => 'Producto no encontrado'];
+        }
+        
+        // Eliminar el producto
+        $stmt = $conn->prepare("DELETE FROM Productos WHERE ID_Producto = :id");
+        $result = $stmt->execute(['id' => $productId]);
+        
+        if ($result) {
+            return ['success' => true, 'message' => 'Producto eliminado exitosamente'];
+        }
+        
+        return ['success' => false, 'message' => 'Error al eliminar producto'];
+    } catch (PDOException $e) {
+        error_log("Error al eliminar producto: " . $e->getMessage());
+        // Si hay error de foreign key constraint (producto tiene órdenes asociadas)
+        if ($e->getCode() == '23000') {
+            return ['success' => false, 'message' => 'No se puede eliminar el producto porque tiene órdenes asociadas'];
+        }
+        return ['success' => false, 'message' => 'Error al eliminar producto'];
     }
 }
 
@@ -735,5 +781,246 @@ function getGuestCartCount() {
         return 0;
     }
     return array_sum($_SESSION['guest_cart']);
+}
+
+/* ========================================
+   FUNCIONES DE ÓRDENES Y CHECKOUT
+   ======================================== */
+
+/**
+ * Crear una nueva orden con sus detalles
+ * @param int $userId ID del usuario
+ * @param float $total Total de la orden
+ * @param string $direccionEnvio Dirección de envío
+ * @param array $cartItems Items del carrito
+ * @return array ['success' => bool, 'message' => string, 'order_id' => int|null]
+ */
+function createOrder($userId, $total, $direccionEnvio, $cartItems) {
+    $conn = getDBConnection();
+    if (!$conn) {
+        return ['success' => false, 'message' => 'Error de conexión a la base de datos'];
+    }
+    
+    try {
+        // Iniciar transacción
+        $conn->beginTransaction();
+        
+        // 1. Crear la orden
+        $sql = "INSERT INTO Ordenes (ID_Usuario_FK, Total_Orden, Estado_Orden, Direccion_Envio_Snapshot) 
+                VALUES (:user_id, :total, 'Procesando', :direccion)";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            'user_id' => $userId,
+            'total' => $total,
+            'direccion' => $direccionEnvio
+        ]);
+        
+        $orderId = $conn->lastInsertId();
+        
+        // 2. Insertar detalles de la orden y actualizar inventario
+        foreach ($cartItems as $item) {
+            $productId = isset($item['ID_Producto_FK']) ? $item['ID_Producto_FK'] : $item['ID_Producto'];
+            $cantidad = $item['Cantidad'];
+            $precioUnitario = $item['Precio'];
+            $subtotal = $cantidad * $precioUnitario;
+            
+            // Verificar stock disponible
+            $checkStock = $conn->prepare("SELECT Cantidad_Almacen FROM Productos WHERE ID_Producto = :id");
+            $checkStock->execute(['id' => $productId]);
+            $stock = $checkStock->fetchColumn();
+            
+            if ($stock < $cantidad) {
+                // Rollback si no hay suficiente stock
+                $conn->rollBack();
+                return ['success' => false, 'message' => 'Stock insuficiente para algunos productos'];
+            }
+            
+            // Insertar detalle de la orden
+            $sqlDetalle = "INSERT INTO Ordenes_Detalles (ID_Orden_FK, ID_Producto_FK, Cantidad, Precio_Unitario_Snapshot, Subtotal_Linea) 
+                          VALUES (:orden_id, :producto_id, :cantidad, :precio, :subtotal)";
+            $stmtDetalle = $conn->prepare($sqlDetalle);
+            $stmtDetalle->execute([
+                'orden_id' => $orderId,
+                'producto_id' => $productId,
+                'cantidad' => $cantidad,
+                'precio' => $precioUnitario,
+                'subtotal' => $subtotal
+            ]);
+            
+            // Actualizar inventario
+            $sqlUpdate = "UPDATE Productos SET Cantidad_Almacen = Cantidad_Almacen - :cantidad WHERE ID_Producto = :id";
+            $stmtUpdate = $conn->prepare($sqlUpdate);
+            $stmtUpdate->execute([
+                'cantidad' => $cantidad,
+                'id' => $productId
+            ]);
+        }
+        
+        // 3. Vaciar el carrito del usuario
+        clearCart($userId);
+        
+        // Confirmar transacción
+        $conn->commit();
+        
+        return [
+            'success' => true, 
+            'message' => 'Orden creada exitosamente',
+            'order_id' => $orderId
+        ];
+    } catch (PDOException $e) {
+        // Rollback en caso de error
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        error_log("Error al crear orden: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Error al procesar la orden: ' . $e->getMessage()];
+    }
+}
+
+/**
+ * Obtener todas las órdenes de un usuario
+ * @param int $userId ID del usuario
+ * @return array Array de órdenes
+ */
+function getUserOrders($userId) {
+    $conn = getDBConnection();
+    if (!$conn) return [];
+    
+    try {
+        $sql = "SELECT * FROM Ordenes WHERE ID_Usuario_FK = :user_id ORDER BY Fecha_Orden DESC";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(['user_id' => $userId]);
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log("Error al obtener órdenes del usuario: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Obtener detalles de una orden específica
+ * @param int $orderId ID de la orden
+ * @return array|null Datos de la orden o null
+ */
+function getOrderById($orderId) {
+    $conn = getDBConnection();
+    if (!$conn) return null;
+    
+    try {
+        $sql = "SELECT o.*, u.Nombre_Usuario, u.Correo_Electronico 
+                FROM Ordenes o
+                INNER JOIN Usuarios u ON o.ID_Usuario_FK = u.ID_Usuario
+                WHERE o.ID_Orden = :id";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(['id' => $orderId]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log("Error al obtener orden: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Obtener detalles de productos de una orden
+ * @param int $orderId ID de la orden
+ * @return array Array de productos de la orden
+ */
+function getOrderDetails($orderId) {
+    $conn = getDBConnection();
+    if (!$conn) return [];
+    
+    try {
+        $sql = "SELECT od.*, p.Nombre, p.imagen 
+                FROM Ordenes_Detalles od
+                INNER JOIN Productos p ON od.ID_Producto_FK = p.ID_Producto
+                WHERE od.ID_Orden_FK = :orden_id";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(['orden_id' => $orderId]);
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log("Error al obtener detalles de orden: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Obtener todas las órdenes (para admin)
+ * @return array Array de todas las órdenes
+ */
+function getAllOrders() {
+    $conn = getDBConnection();
+    if (!$conn) return [];
+    
+    try {
+        $sql = "SELECT o.*, u.Nombre_Usuario, u.Correo_Electronico 
+                FROM Ordenes o
+                INNER JOIN Usuarios u ON o.ID_Usuario_FK = u.ID_Usuario
+                ORDER BY o.Fecha_Orden DESC";
+        $stmt = $conn->query($sql);
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log("Error al obtener todas las órdenes: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Actualizar estado de una orden
+ * @param int $orderId ID de la orden
+ * @param string $estado Nuevo estado
+ * @return bool True si se actualizó correctamente
+ */
+function updateOrderStatus($orderId, $estado) {
+    $conn = getDBConnection();
+    if (!$conn) return false;
+    
+    try {
+        $stmt = $conn->prepare("UPDATE Ordenes SET Estado_Orden = :estado WHERE ID_Orden = :id");
+        $stmt->execute(['estado' => $estado, 'id' => $orderId]);
+        return true;
+    } catch (PDOException $e) {
+        error_log("Error al actualizar estado de orden: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Actualizar tarjeta bancaria del usuario
+ * @param int $userId ID del usuario
+ * @param string $numeroTarjeta Número de tarjeta (encriptado)
+ * @return bool True si se actualizó correctamente
+ */
+function updateUserCard($userId, $numeroTarjeta) {
+    $conn = getDBConnection();
+    if (!$conn) return false;
+    
+    try {
+        $stmt = $conn->prepare("UPDATE Usuarios SET Numero_Tarjeta_Bancaria = :tarjeta WHERE ID_Usuario = :id");
+        $stmt->execute(['tarjeta' => $numeroTarjeta, 'id' => $userId]);
+        return true;
+    } catch (PDOException $e) {
+        error_log("Error al actualizar tarjeta: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Actualizar dirección postal del usuario
+ * @param int $userId ID del usuario
+ * @param string $direccion Nueva dirección
+ * @return bool True si se actualizó correctamente
+ */
+function updateUserAddress($userId, $direccion) {
+    $conn = getDBConnection();
+    if (!$conn) return false;
+    
+    try {
+        $stmt = $conn->prepare("UPDATE Usuarios SET Direccion_Postal = :direccion WHERE ID_Usuario = :id");
+        $stmt->execute(['direccion' => $direccion, 'id' => $userId]);
+        return true;
+    } catch (PDOException $e) {
+        error_log("Error al actualizar dirección: " . $e->getMessage());
+        return false;
+    }
 }
 ?>

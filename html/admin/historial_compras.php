@@ -5,8 +5,20 @@ require_once '../config/database.php';
 
 $current_page = 'admin';
 
-// Obtener todas las compras
-$compras = getAllPurchases();
+// Obtener todas las órdenes (compras)
+$compras = getAllOrders();
+
+// Función para determinar la clase del badge según el estado
+function getEstadoBadgeClass($estado) {
+    $clases = [
+        'Procesando' => 'info',
+        'En camino' => 'warning',
+        'Entregado' => 'success',
+        'Completado' => 'success',
+        'Cancelado' => 'danger'
+    ];
+    return $clases[$estado] ?? 'secondary';
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -53,7 +65,7 @@ $compras = getAllPurchases();
                 <div class="card border-info">
                     <div class="card-body text-center">
                         <i class="bi bi-currency-dollar display-4 text-info"></i>
-                        <h3 class="mt-2">$<?php echo number_format(array_sum(array_column($compras, 'Total')), 2); ?></h3>
+                        <h3 class="mt-2">$<?php echo number_format(array_sum(array_column($compras, 'Total_Orden')), 2); ?></h3>
                         <p class="text-muted mb-0">Ingresos Totales</p>
                     </div>
                 </div>
@@ -62,7 +74,7 @@ $compras = getAllPurchases();
                 <div class="card border-warning">
                     <div class="card-body text-center">
                         <i class="bi bi-graph-up display-4 text-warning"></i>
-                        <h3 class="mt-2">$<?php echo count($compras) > 0 ? number_format(array_sum(array_column($compras, 'Total')) / count($compras), 2) : '0.00'; ?></h3>
+                        <h3 class="mt-2">$<?php echo count($compras) > 0 ? number_format(array_sum(array_column($compras, 'Total_Orden')) / count($compras), 2) : '0.00'; ?></h3>
                         <p class="text-muted mb-0">Ticket Promedio</p>
                     </div>
                 </div>
@@ -79,25 +91,31 @@ $compras = getAllPurchases();
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>ID Compra</th>
+                                <th>ID Orden</th>
                                 <th>Cliente</th>
                                 <th>Correo</th>
                                 <th>Fecha</th>
                                 <th>Hora</th>
                                 <th>Total</th>
                                 <th>Estado</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($compras as $compra): ?>
                             <tr>
-                                <td><strong>#<?php echo $compra['ID_Compra']; ?></strong></td>
+                                <td><strong>#<?php echo str_pad($compra['ID_Orden'], 6, '0', STR_PAD_LEFT); ?></strong></td>
                                 <td><?php echo htmlspecialchars($compra['Nombre_Usuario']); ?></td>
                                 <td><?php echo htmlspecialchars($compra['Correo_Electronico']); ?></td>
-                                <td><?php echo date('d/m/Y', strtotime($compra['Fecha_Compra'])); ?></td>
-                                <td><?php echo date('H:i', strtotime($compra['Fecha_Compra'])); ?></td>
-                                <td><strong class="text-success">$<?php echo number_format($compra['Total'], 2); ?></strong></td>
-                                <td><span class="badge bg-success">Completada</span></td>
+                                <td><?php echo date('d/m/Y', strtotime($compra['Fecha_Orden'])); ?></td>
+                                <td><?php echo date('H:i', strtotime($compra['Fecha_Orden'])); ?></td>
+                                <td><strong class="text-success">$<?php echo number_format($compra['Total_Orden'], 2); ?></strong></td>
+                                <td><span class="badge bg-<?php echo getEstadoBadgeClass($compra['Estado_Orden']); ?>"><?php echo htmlspecialchars($compra['Estado_Orden']); ?></span></td>
+                                <td>
+                                    <a href="ver_orden_admin.php?id=<?php echo $compra['ID_Orden']; ?>" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
                             </tr>
                             <?php endforeach; ?>
                             
@@ -137,7 +155,7 @@ $compras = getAllPurchases();
                             // Agrupar por cliente
                             $clienteStats = [];
                             foreach ($compras as $compra) {
-                                $clienteKey = $compra['ID_Usuario'];
+                                $clienteKey = $compra['ID_Usuario_FK'];
                                 if (!isset($clienteStats[$clienteKey])) {
                                     $clienteStats[$clienteKey] = [
                                         'nombre' => $compra['Nombre_Usuario'],
@@ -147,7 +165,7 @@ $compras = getAllPurchases();
                                     ];
                                 }
                                 $clienteStats[$clienteKey]['count']++;
-                                $clienteStats[$clienteKey]['total'] += $compra['Total'];
+                                $clienteStats[$clienteKey]['total'] += $compra['Total_Orden'];
                             }
                             
                             // Ordenar por monto total descendente

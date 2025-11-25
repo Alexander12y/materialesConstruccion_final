@@ -86,7 +86,7 @@ if (isset($_SESSION['product_error'])) {
                                 <th>ID</th>
                                 <th>Nombre</th>
                                 <th>Descripción</th>
-                                <th>Categoría</th>
+                                <th>Fabricante</th>
                                 <th>Precio</th>
                                 <th>Stock</th>
                                 <th>Estado</th>
@@ -95,23 +95,26 @@ if (isset($_SESSION['product_error'])) {
                         </thead>
                         <tbody>
                             <?php foreach ($productos as $producto): 
-                                $stockClass = $producto['Cantidad_Disponible'] > 10 ? 'success' : ($producto['Cantidad_Disponible'] > 0 ? 'warning' : 'danger');
+                                $stockClass = $producto['Cantidad_Almacen'] > 10 ? 'success' : ($producto['Cantidad_Almacen'] > 0 ? 'warning' : 'danger');
                             ?>
                             <tr>
                                 <td>#<?php echo $producto['ID_Producto']; ?></td>
-                                <td><strong><?php echo htmlspecialchars($producto['Nombre_Producto']); ?></strong></td>
+                                <td><strong><?php echo htmlspecialchars($producto['Nombre']); ?></strong></td>
                                 <td><?php echo htmlspecialchars(substr($producto['Descripcion'] ?? '', 0, 50)) . (strlen($producto['Descripcion'] ?? '') > 50 ? '...' : ''); ?></td>
-                                <td><?php echo htmlspecialchars($producto['Categoria'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($producto['Fabricante'] ?? 'N/A'); ?></td>
                                 <td>$<?php echo number_format($producto['Precio'], 2); ?></td>
-                                <td><?php echo $producto['Cantidad_Disponible']; ?></td>
+                                <td><?php echo $producto['Cantidad_Almacen']; ?></td>
                                 <td>
                                     <span class="badge bg-<?php echo $stockClass; ?>">
-                                        <?php echo $producto['Cantidad_Disponible'] > 0 ? 'Disponible' : 'Agotado'; ?>
+                                        <?php echo $producto['Cantidad_Almacen'] > 0 ? 'Disponible' : 'Agotado'; ?>
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning" onclick="editarProducto(<?php echo htmlspecialchars(json_encode($producto)); ?>)">
+                                    <button class="btn btn-sm btn-warning me-1" onclick="editarProducto(<?php echo htmlspecialchars(json_encode($producto)); ?>)" title="Editar">
                                         <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="eliminarProducto(<?php echo $producto['ID_Producto']; ?>, '<?php echo htmlspecialchars(addslashes($producto['Nombre'])); ?>')" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -144,21 +147,9 @@ if (isset($_SESSION['product_error'])) {
                     <input type="hidden" name="action" value="crear">
                     <div class="modal-body">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label class="form-label">Nombre del Producto *</label>
                                 <input type="text" class="form-control" name="nombre" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Categoría</label>
-                                <select class="form-select" name="categoria">
-                                    <option value="">Seleccionar...</option>
-                                    <option value="Cemento y Concreto">Cemento y Concreto</option>
-                                    <option value="Varilla y Acero">Varilla y Acero</option>
-                                    <option value="Tabique y Block">Tabique y Block</option>
-                                    <option value="Herramientas">Herramientas</option>
-                                    <option value="Eléctrico">Eléctrico</option>
-                                    <option value="Plomería">Plomería</option>
-                                </select>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -166,16 +157,42 @@ if (isset($_SESSION['product_error'])) {
                             <textarea class="form-control" name="descripcion" rows="3"></textarea>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Precio *</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
                                     <input type="number" class="form-control" name="precio" step="0.01" min="0" required>
                                 </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Cantidad Disponible *</label>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Stock *</label>
                                 <input type="number" class="form-control" name="cantidad" min="0" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Categoría</label>
+                                <select class="form-select" name="categoria">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="1">Obra Gris</option>
+                                    <option value="2">Aceros y Metales</option>
+                                    <option value="3">Acabados y Pisos</option>
+                                    <option value="4">Plomería y Tubería</option>
+                                    <option value="5">Material Eléctrico</option>
+                                    <option value="6">Herramientas y Equipo</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Fabricante</label>
+                                <input type="text" class="form-control" name="fabricante" placeholder="Ej: Cemex, Deacero, Truper">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Origen</label>
+                                <select class="form-select" name="origen">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Nacional">Nacional</option>
+                                    <option value="Importado">Importado</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -201,21 +218,9 @@ if (isset($_SESSION['product_error'])) {
                     <input type="hidden" name="id" id="edit_id">
                     <div class="modal-body">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label class="form-label">Nombre del Producto *</label>
                                 <input type="text" class="form-control" name="nombre" id="edit_nombre" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Categoría</label>
-                                <select class="form-select" name="categoria" id="edit_categoria">
-                                    <option value="">Seleccionar...</option>
-                                    <option value="Cemento y Concreto">Cemento y Concreto</option>
-                                    <option value="Varilla y Acero">Varilla y Acero</option>
-                                    <option value="Tabique y Block">Tabique y Block</option>
-                                    <option value="Herramientas">Herramientas</option>
-                                    <option value="Eléctrico">Eléctrico</option>
-                                    <option value="Plomería">Plomería</option>
-                                </select>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -223,16 +228,42 @@ if (isset($_SESSION['product_error'])) {
                             <textarea class="form-control" name="descripcion" id="edit_descripcion" rows="3"></textarea>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Precio *</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
                                     <input type="number" class="form-control" name="precio" id="edit_precio" step="0.01" min="0" required>
                                 </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Cantidad Disponible *</label>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Stock *</label>
                                 <input type="number" class="form-control" name="cantidad" id="edit_cantidad" min="0" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Categoría</label>
+                                <select class="form-select" name="categoria" id="edit_categoria">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="1">Obra Gris</option>
+                                    <option value="2">Aceros y Metales</option>
+                                    <option value="3">Acabados y Pisos</option>
+                                    <option value="4">Plomería y Tubería</option>
+                                    <option value="5">Material Eléctrico</option>
+                                    <option value="6">Herramientas y Equipo</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Fabricante</label>
+                                <input type="text" class="form-control" name="fabricante" id="edit_fabricante" placeholder="Ej: Cemex, Deacero, Truper">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Origen</label>
+                                <select class="form-select" name="origen" id="edit_origen">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Nacional">Nacional</option>
+                                    <option value="Importado">Importado</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -251,13 +282,39 @@ if (isset($_SESSION['product_error'])) {
     <script>
         function editarProducto(producto) {
             document.getElementById('edit_id').value = producto.ID_Producto;
-            document.getElementById('edit_nombre').value = producto.Nombre_Producto;
-            document.getElementById('edit_categoria').value = producto.Categoria || '';
+            document.getElementById('edit_nombre').value = producto.Nombre;
+            document.getElementById('edit_fabricante').value = producto.Fabricante || '';
             document.getElementById('edit_descripcion').value = producto.Descripcion || '';
             document.getElementById('edit_precio').value = producto.Precio;
-            document.getElementById('edit_cantidad').value = producto.Cantidad_Disponible;
+            document.getElementById('edit_cantidad').value = producto.Cantidad_Almacen;
+            document.getElementById('edit_categoria').value = producto.ID_Categoria_FK || '';
+            document.getElementById('edit_origen').value = producto.Origen || '';
             
             new bootstrap.Modal(document.getElementById('editarProductoModal')).show();
+        }
+
+        function eliminarProducto(id, nombre) {
+            if (confirm('¿Estás seguro de que deseas eliminar el producto "' + nombre + '"?\n\nEsta acción no se puede deshacer.')) {
+                // Crear formulario para eliminar
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'procesar_producto.php';
+                
+                const actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'action';
+                actionInput.value = 'eliminar';
+                form.appendChild(actionInput);
+                
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = id;
+                form.appendChild(idInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
         }
     </script>
 </body>

@@ -16,7 +16,9 @@ if ($action === 'crear') {
         'descripcion' => trim($_POST['descripcion'] ?? ''),
         'precio' => floatval($_POST['precio'] ?? 0),
         'cantidad' => intval($_POST['cantidad'] ?? 0),
-        'categoria' => trim($_POST['categoria'] ?? '')
+        'fabricante' => trim($_POST['fabricante'] ?? ''),
+        'origen' => trim($_POST['origen'] ?? ''),
+        'categoria' => !empty($_POST['categoria']) ? intval($_POST['categoria']) : null
     ];
     
     if (empty($data['nombre']) || $data['precio'] <= 0) {
@@ -40,7 +42,9 @@ if ($action === 'crear') {
         'descripcion' => trim($_POST['descripcion'] ?? ''),
         'precio' => floatval($_POST['precio'] ?? 0),
         'cantidad' => intval($_POST['cantidad'] ?? 0),
-        'categoria' => trim($_POST['categoria'] ?? '')
+        'fabricante' => trim($_POST['fabricante'] ?? ''),
+        'origen' => trim($_POST['origen'] ?? ''),
+        'categoria' => !empty($_POST['categoria']) ? intval($_POST['categoria']) : null
     ];
     
     if (empty($data['nombre']) || $data['precio'] <= 0 || $productId <= 0) {
@@ -50,6 +54,23 @@ if ($action === 'crear') {
     }
     
     $result = updateProduct($productId, $data);
+    
+    if ($result['success']) {
+        $_SESSION['product_success'] = $result['message'];
+    } else {
+        $_SESSION['product_error'] = $result['message'];
+    }
+    
+} elseif ($action === 'eliminar') {
+    $productId = intval($_POST['id'] ?? 0);
+    
+    if ($productId <= 0) {
+        $_SESSION['product_error'] = 'ID de producto inválido';
+        header('Location: productos.php');
+        exit();
+    }
+    
+    $result = deleteProduct($productId);
     
     if ($result['success']) {
         $_SESSION['product_success'] = $result['message'];

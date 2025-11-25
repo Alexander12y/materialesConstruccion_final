@@ -7,16 +7,28 @@ $current_page = 'admin';
 
 // Obtener estadísticas
 $productos = getAllProducts();
-$compras = getAllPurchases();
+$ordenes = getAllOrders();
 
 $totalProductos = count($productos);
-$totalCompras = count($compras);
-$inventarioTotal = array_sum(array_column($productos, 'Cantidad_Disponible'));
+$totalOrdenes = count($ordenes);
+$inventarioTotal = array_sum(array_column($productos, 'Cantidad_Almacen'));
 
 // Calcular ingresos totales
 $ingresosTotal = 0;
-foreach ($compras as $compra) {
-    $ingresosTotal += $compra['Total'];
+foreach ($ordenes as $orden) {
+    $ingresosTotal += $orden['Total_Orden'];
+}
+
+// Función para determinar la clase del badge según el estado
+function getEstadoBadgeClass($estado) {
+    $clases = [
+        'Procesando' => 'info',
+        'En camino' => 'warning',
+        'Entregado' => 'success',
+        'Completado' => 'success',
+        'Cancelado' => 'danger'
+    ];
+    return $clases[$estado] ?? 'secondary';
 }
 
 // Mensajes
@@ -98,8 +110,8 @@ if (isset($_SESSION['admin_error'])) {
                 <div class="card border-warning">
                     <div class="card-body text-center">
                         <i class="bi bi-cart-check display-4 text-warning"></i>
-                        <h3 class="mt-2"><?php echo $totalCompras; ?></h3>
-                        <p class="text-muted mb-0">Compras Realizadas</p>
+                        <h3 class="mt-2"><?php echo $totalOrdenes; ?></h3>
+                        <p class="text-muted mb-0">Órdenes Realizadas</p>
                     </div>
                 </div>
             </div>
@@ -156,7 +168,7 @@ if (isset($_SESSION['admin_error'])) {
                             <tr>
                                 <th>ID</th>
                                 <th>Nombre</th>
-                                <th>Categoría</th>
+                                <th>Fabricante</th>
                                 <th>Precio</th>
                                 <th>Stock</th>
                                 <th>Estado</th>
@@ -166,17 +178,17 @@ if (isset($_SESSION['admin_error'])) {
                             <?php 
                             $productosRecientes = array_slice($productos, 0, 5);
                             foreach ($productosRecientes as $producto): 
-                                $stockClass = $producto['Cantidad_Disponible'] > 10 ? 'success' : ($producto['Cantidad_Disponible'] > 0 ? 'warning' : 'danger');
+                                $stockClass = $producto['Cantidad_Almacen'] > 10 ? 'success' : ($producto['Cantidad_Almacen'] > 0 ? 'warning' : 'danger');
                             ?>
                             <tr>
                                 <td>#<?php echo $producto['ID_Producto']; ?></td>
-                                <td><strong><?php echo htmlspecialchars($producto['Nombre_Producto']); ?></strong></td>
-                                <td><?php echo htmlspecialchars($producto['Categoria'] ?? 'Sin categoría'); ?></td>
+                                <td><strong><?php echo htmlspecialchars($producto['Nombre']); ?></strong></td>
+                                <td><?php echo htmlspecialchars($producto['Fabricante'] ?? 'N/A'); ?></td>
                                 <td>$<?php echo number_format($producto['Precio'], 2); ?></td>
-                                <td><?php echo $producto['Cantidad_Disponible']; ?></td>
+                                <td><?php echo $producto['Cantidad_Almacen']; ?></td>
                                 <td>
                                     <span class="badge bg-<?php echo $stockClass; ?>">
-                                        <?php echo $producto['Cantidad_Disponible'] > 0 ? 'Disponible' : 'Agotado'; ?>
+                                        <?php echo $producto['Cantidad_Almacen'] > 0 ? 'Disponible' : 'Agotado'; ?>
                                     </span>
                                 </td>
                             </tr>
@@ -198,41 +210,48 @@ if (isset($_SESSION['admin_error'])) {
             </div>
         </div>
 
-        <!-- Compras Recientes -->
+        <!-- Órdenes Recientes -->
         <div class="card shadow-sm">
             <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="bi bi-cart-check"></i> Compras Recientes</h5>
+                <h5 class="mb-0"><i class="bi bi-cart-check"></i> Órdenes Recientes</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>ID Compra</th>
+                                <th>ID Orden</th>
                                 <th>Cliente</th>
                                 <th>Fecha</th>
                                 <th>Total</th>
                                 <th>Estado</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php 
-                            $comprasRecientes = array_slice($compras, 0, 5);
-                            foreach ($comprasRecientes as $compra): 
+                            $ordenesRecientes = array_slice($ordenes, 0, 5);
+                            foreach ($ordenesRecientes as $orden): 
                             ?>
                             <tr>
-                                <td>#<?php echo $compra['ID_Compra']; ?></td>
-                                <td><?php echo htmlspecialchars($compra['Nombre_Usuario']); ?></td>
-                                <td><?php echo date('d/m/Y', strtotime($compra['Fecha_Compra'])); ?></td>
-                                <td><strong>$<?php echo number_format($compra['Total'], 2); ?></strong></td>
-                                <td><span class="badge bg-success">Completada</span></td>
+                                <td><strong>#<?php echo str_pad($orden['ID_Orden'], 6, '0', STR_PAD_LEFT); ?></strong></td>
+                                <td><?php echo htmlspecialchars($orden['Nombre_Usuario']); ?></td>
+                                <td><?php echo date('d/m/Y H:i', strtotime($orden['Fecha_Orden'])); ?></td>
+                                <td><strong class="text-success">$<?php echo number_format($orden['Total_Orden'], 2); ?></strong></td>
+                                <td><span class="badge bg-<?php echo getEstadoBadgeClass($orden['Estado_Orden']); ?>"><?php echo htmlspecialchars($orden['Estado_Orden']); ?></span></td>
+                                <td>
+                                    <a href="ver_orden_admin.php?id=<?php echo $orden['ID_Orden']; ?>" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
                             </tr>
                             <?php endforeach; ?>
                             
-                            <?php if (empty($comprasRecientes)): ?>
+                            <?php if (empty($ordenesRecientes)): ?>
                             <tr>
-                                <td colspan="5" class="text-center text-muted">
-                                    <i class="bi bi-inbox"></i> No hay compras registradas
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox display-1"></i>
+                                    <p class="mt-2">No hay órdenes registradas</p>
                                 </td>
                             </tr>
                             <?php endif; ?>
@@ -240,7 +259,7 @@ if (isset($_SESSION['admin_error'])) {
                     </table>
                 </div>
                 <div class="text-center">
-                    <a href="historial_compras.php" class="btn btn-outline-success">Ver Todas las Compras</a>
+                    <a href="historial_compras.php" class="btn btn-outline-success">Ver Todas las Órdenes</a>
                 </div>
             </div>
         </div>

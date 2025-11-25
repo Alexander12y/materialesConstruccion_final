@@ -25,30 +25,25 @@ if ($usuario['Fecha_Nacimiento']) {
     $fecha_nacimiento_formateada = $fecha_obj->format('d/m/Y');
 }
 
-// Pedidos recientes (ejemplo - esto se conectará a la BD más adelante)
-$pedidos = [
-    [
-        'id' => '001',
-        'fecha' => '10 Nov 2025',
-        'total' => 1250.50,
-        'estado' => 'Entregado',
-        'clase_badge' => 'success'
-    ],
-    [
-        'id' => '002',
-        'fecha' => '15 Nov 2025',
-        'total' => 850.00,
-        'estado' => 'En camino',
-        'clase_badge' => 'warning'
-    ],
-    [
-        'id' => '003',
-        'fecha' => '17 Nov 2025',
-        'total' => 2100.75,
-        'estado' => 'Procesando',
-        'clase_badge' => 'info'
-    ]
-];
+// Obtener pedidos reales del usuario desde la base de datos
+$pedidos = getUserOrders($_SESSION['user_id']);
+
+// Función para determinar la clase del badge según el estado
+function getEstadoBadgeClass($estado) {
+    $clases = [
+        'Procesando' => 'info',
+        'En camino' => 'warning',
+        'Entregado' => 'success',
+        'Completado' => 'success',
+        'Cancelado' => 'danger'
+    ];
+    return $clases[$estado] ?? 'secondary';
+}
+
+// Calcular estadísticas
+$totalPedidos = count($pedidos);
+$totalGastado = array_sum(array_column($pedidos, 'Total_Orden'));
+$estadoCuenta = $totalGastado > 10000 ? 'Premium' : ($totalGastado > 5000 ? 'Gold' : 'Silver');
 
 $current_page = 'perfil';
 
@@ -186,23 +181,38 @@ if (isset($_SESSION['update_success'])) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($pedidos as $pedido): ?>
+                                    <?php if (empty($pedidos)): ?>
                                     <tr>
-                                        <td><strong>#<?php echo $pedido['id']; ?></strong></td>
-                                        <td><?php echo $pedido['fecha']; ?></td>
-                                        <td>$<?php echo number_format($pedido['total'], 2); ?></td>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            <i class="bi bi-inbox display-1"></i>
+                                            <p class="mt-3">No tienes pedidos aún</p>
+                                            <a href="index.php" class="btn btn-success">
+                                                <i class="bi bi-shop"></i> Ir de Compras
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <?php else: ?>
+                                    <?php foreach ($pedidos as $pedido): 
+                                        $fechaPedido = new DateTime($pedido['Fecha_Orden']);
+                                        $fechaFormateada = $fechaPedido->format('d M Y');
+                                    ?>
+                                    <tr>
+                                        <td><strong>#<?php echo str_pad($pedido['ID_Orden'], 6, '0', STR_PAD_LEFT); ?></strong></td>
+                                        <td><?php echo $fechaFormateada; ?></td>
+                                        <td>$<?php echo number_format($pedido['Total_Orden'], 2); ?></td>
                                         <td>
-                                            <span class="badge bg-<?php echo $pedido['clase_badge']; ?>">
-                                                <?php echo $pedido['estado']; ?>
+                                            <span class="badge bg-<?php echo getEstadoBadgeClass($pedido['Estado_Orden']); ?>">
+                                                <?php echo htmlspecialchars($pedido['Estado_Orden']); ?>
                                             </span>
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-primary">
+                                            <a href="ver_orden.php?id=<?php echo $pedido['ID_Orden']; ?>" class="btn btn-sm btn-outline-primary">
                                                 <i class="bi bi-eye"></i> Ver
-                                            </button>
+                                            </a>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -215,7 +225,7 @@ if (isset($_SESSION['update_success'])) {
                         <div class="card text-center shadow-sm">
                             <div class="card-body">
                                 <i class="bi bi-cart-check display-4 text-primary"></i>
-                                <h3 class="mt-2">15</h3>
+                                <h3 class="mt-2"><?php echo $totalPedidos; ?></h3>
                                 <p class="text-muted">Pedidos Totales</p>
                             </div>
                         </div>
@@ -224,7 +234,7 @@ if (isset($_SESSION['update_success'])) {
                         <div class="card text-center shadow-sm">
                             <div class="card-body">
                                 <i class="bi bi-currency-dollar display-4 text-success"></i>
-                                <h3 class="mt-2">$12,450</h3>
+                                <h3 class="mt-2">$<?php echo number_format($totalGastado, 2); ?></h3>
                                 <p class="text-muted">Total Gastado</p>
                             </div>
                         </div>
@@ -233,7 +243,7 @@ if (isset($_SESSION['update_success'])) {
                         <div class="card text-center shadow-sm">
                             <div class="card-body">
                                 <i class="bi bi-star-fill display-4 text-warning"></i>
-                                <h3 class="mt-2">Premium</h3>
+                                <h3 class="mt-2"><?php echo $estadoCuenta; ?></h3>
                                 <p class="text-muted">Estado de Cuenta</p>
                             </div>
                         </div>
