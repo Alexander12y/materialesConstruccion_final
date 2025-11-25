@@ -213,8 +213,10 @@ unset($_SESSION['cart_message'], $_SESSION['cart_message_type']);
                 <?php foreach ($productosRelacionados as $related): ?>
                 <div class="col-md-4">
                     <div class="card h-100">
-                        <div class="product-image">
-                            <i class="bi <?php echo $icon; ?>"></i>
+                        <div class="product-image-real">
+                            <img src="public/products/<?php echo htmlspecialchars($related['imagen'] ?? 'default-product.jpg'); ?>" 
+                                 alt="<?php echo htmlspecialchars($related['Nombre']); ?>" 
+                                 onerror="this.src='public/products/default-product.jpg'">
                         </div>
                         <div class="card-body">
                             <h5 class="card-title"><?php echo htmlspecialchars($related['Nombre']); ?></h5>
