@@ -186,10 +186,16 @@ unset($_SESSION['checkout_error']);
                         <div class="card-body">
                             <div class="mb-3">
                                 <label for="numero_tarjeta" class="form-label">Número de Tarjeta *</label>
+                                <?php
+                                $storedCard = $usuario['Numero_Tarjeta_Bancaria'] ?? '';
+                                $isMasked = $storedCard !== '' && preg_match('/[^0-9\s]/', $storedCard);
+                                ?>
                                 <input type="text" class="form-control card-input" id="numero_tarjeta" name="numero_tarjeta" 
                                        maxlength="19" required 
                                        placeholder="#### #### #### ####"
-                                       value="<?php echo htmlspecialchars($usuario['Numero_Tarjeta_Bancaria'] ?? ''); ?>">
+                                       value="<?php echo htmlspecialchars($storedCard); ?>"
+                                       data-saved-card="<?php echo $isMasked ? '1' : '0'; ?>">
+                                <input type="hidden" name="using_saved_card" id="using_saved_card" value="<?php echo $isMasked ? '1' : '0'; ?>">
                                 <div class="form-text">
                                     <i class="bi bi-shield-check"></i> Tu información está protegida con encriptación SSL
                                 </div>
@@ -312,69 +318,118 @@ unset($_SESSION['checkout_error']);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Formatear número de tarjeta automáticamente
-        document.getElementById('numero_tarjeta').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\s/g, '');
-            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
-            e.target.value = formattedValue;
-        });
+        (function() {
+            const numeroInput = document.getElementById('numero_tarjeta');
+            const fechaInput = document.getElementById('fecha_expiracion');
+            const cvvInput = document.getElementById('cvv');
+            const checkoutForm = document.getElementById('checkoutForm');
+            const usingSavedHidden = document.getElementById('using_saved_card');
+            const updateCardCheckbox = document.getElementById('update_card');
 
-        // Formatear fecha de expiración
-        document.getElementById('fecha_expiracion').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length >= 2) {
-                value = value.substring(0, 2) + '/' + value.substring(2, 4);
-            }
-            e.target.value = value;
-        });
-
-        // Solo permitir números en CVV
-        document.getElementById('cvv').addEventListener('input', function(e) {
-            e.target.value = e.target.value.replace(/\D/g, '');
-        });
-
-        // Validación del formulario
-        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-            const numeroTarjeta = document.getElementById('numero_tarjeta').value.replace(/\s/g, '');
-            const fechaExp = document.getElementById('fecha_expiracion').value;
-            const cvv = document.getElementById('cvv').value;
-
-            // Validar número de tarjeta (debe tener 16 dígitos)
-            if (numeroTarjeta.length < 15 || numeroTarjeta.length > 16) {
-                e.preventDefault();
-                alert('El número de tarjeta debe tener 15 o 16 dígitos');
-                return false;
+            function formatCardValue(value) {
+                const digits = value.replace(/\D/g, '');
+                return digits.match(/.{1,4}/g)?.join(' ') || digits;
             }
 
-            // Validar fecha de expiración
-            if (!/^\d{2}\/\d{2}$/.test(fechaExp)) {
-                e.preventDefault();
-                alert('La fecha de expiración debe tener el formato MM/AA');
-                return false;
+            function formatExpiryValue(value) {
+                let digits = value.replace(/\D/g, '');
+                if (digits.length === 0) return '';
+                if (digits.length >= 2) {
+                    digits = digits.substring(0,2) + '/' + digits.substring(2,4);
+                }
+                return digits;
             }
 
-            // Validar que la fecha no esté vencida
-            const [mes, anio] = fechaExp.split('/').map(Number);
-            const hoy = new Date();
-            const mesActual = hoy.getMonth() + 1;
-            const anioActual = hoy.getFullYear() % 100;
+            // Inicializar formateo en carga
+            document.addEventListener('DOMContentLoaded', function() {
+                // Si el valor viene enmascarado (ej: **** **** **** 1234), no intentar validarlo como número completo
+                const isSavedMasked = numeroInput.dataset.savedCard === '1' || usingSavedHidden.value === '1';
 
-            if (anio < anioActual || (anio === anioActual && mes < mesActual)) {
-                e.preventDefault();
-                alert('La tarjeta está vencida');
-                return false;
-            }
+                if (!isSavedMasked && numeroInput.value.trim() !== '') {
+                    numeroInput.value = formatCardValue(numeroInput.value);
+                }
 
-            // Validar CVV
-            if (cvv.length < 3 || cvv.length > 4) {
-                e.preventDefault();
-                alert('El CVV debe tener 3 o 4 dígitos');
-                return false;
-            }
+                if (fechaInput.value.trim() !== '') {
+                    fechaInput.value = formatExpiryValue(fechaInput.value);
+                }
+            });
 
-            // Confirmar antes de enviar
-            return confirm('¿Confirmas que deseas proceder con el pago de $' + <?php echo $cartTotal * 1.16; ?>.toFixed(2) + '?');
-        });
+            // Input handlers
+            numeroInput.addEventListener('input', function(e) {
+                const isSavedMasked = numeroInput.dataset.savedCard === '1' || usingSavedHidden.value === '1';
+                // If it was masked and user starts typing digits, switch to editing mode
+                if (isSavedMasked && /\d/.test(e.target.value)) {
+                    numeroInput.dataset.savedCard = '0';
+                    usingSavedHidden.value = '0';
+                    if (updateCardCheckbox) updateCardCheckbox.checked = true;
+                }
+
+                // Only format when the value contains digits (avoid mangling masked stars)
+                if (!/\*/.test(e.target.value)) {
+                    const cursorPos = e.target.selectionStart;
+                    const beforeLen = e.target.value.length;
+                    e.target.value = formatCardValue(e.target.value);
+                    // Try to restore cursor position approximately
+                    const afterLen = e.target.value.length;
+                    const diff = afterLen - beforeLen;
+                    e.target.selectionStart = e.target.selectionEnd = Math.max(0, cursorPos + diff);
+                }
+            });
+
+            fechaInput.addEventListener('input', function(e) {
+                e.target.value = formatExpiryValue(e.target.value);
+            });
+
+            cvvInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+
+            // Submit validation
+            checkoutForm.addEventListener('submit', function(e) {
+                const usingSaved = usingSavedHidden.value === '1';
+                const numeroRaw = numeroInput.value.trim();
+                const numeroDigits = numeroRaw.replace(/\s/g, '');
+                const fechaExp = fechaInput.value.trim();
+                const cvv = cvvInput.value.trim();
+
+                // If not using a saved masked card, validate number length
+                if (!(usingSaved && /\*/.test(numeroRaw))) {
+                    if (numeroDigits.length < 15 || numeroDigits.length > 16) {
+                        e.preventDefault();
+                        alert('El número de tarjeta debe tener 15 o 16 dígitos');
+                        return false;
+                    }
+                }
+
+                // Validar fecha de expiración
+                if (!/^\d{2}\/\d{2}$/.test(fechaExp)) {
+                    e.preventDefault();
+                    alert('La fecha de expiración debe tener el formato MM/AA');
+                    return false;
+                }
+
+                // Validar que la fecha no esté vencida
+                const [mes, anio] = fechaExp.split('/').map(Number);
+                const hoy = new Date();
+                const mesActual = hoy.getMonth() + 1;
+                const anioActual = hoy.getFullYear() % 100;
+
+                if (anio < anioActual || (anio === anioActual && mes < mesActual)) {
+                    e.preventDefault();
+                    alert('La tarjeta está vencida');
+                    return false;
+                }
+
+                // Validar CVV
+                if (cvv.length < 3 || cvv.length > 4) {
+                    e.preventDefault();
+                    alert('El CVV debe tener 3 o 4 dígitos');
+                    return false;
+                }
+
+                return confirm('¿Confirmas que deseas proceder con el pago de $' + <?php echo $cartTotal * 1.16; ?>.toFixed(2) + '?');
+            });
+        })();
     </script>
 </body>
 </html>

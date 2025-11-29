@@ -22,6 +22,7 @@ $fechaExpiracion = trim($_POST['fecha_expiracion'] ?? '');
 $cvv = trim($_POST['cvv'] ?? '');
 $updateAddress = isset($_POST['update_address']);
 $updateCard = isset($_POST['update_card']);
+$usingSavedCard = isset($_POST['using_saved_card']) && $_POST['using_saved_card'] === '1';
 
 // Validaciones básicas
 if (empty($direccionEnvio) || empty($numeroTarjeta) || empty($nombreTarjeta) || empty($fechaExpiracion) || empty($cvv)) {
@@ -33,11 +34,14 @@ if (empty($direccionEnvio) || empty($numeroTarjeta) || empty($nombreTarjeta) || 
 // Limpiar número de tarjeta (remover espacios)
 $numeroTarjetaLimpio = str_replace(' ', '', $numeroTarjeta);
 
-// Validar formato de número de tarjeta (15-16 dígitos)
-if (!preg_match('/^\d{15,16}$/', $numeroTarjetaLimpio)) {
-    $_SESSION['checkout_error'] = 'Número de tarjeta inválido';
-    header('Location: checkout.php');
-    exit();
+// Si se está usando una tarjeta guardada enmascarada (ej: **** **** **** 1234),
+// no validar el número como dígitos completos. En caso contrario validar 15-16 dígitos.
+if (!($usingSavedCard && preg_match('/\*/', $numeroTarjeta))) {
+    if (!preg_match('/^\d{15,16}$/', $numeroTarjetaLimpio)) {
+        $_SESSION['checkout_error'] = 'Número de tarjeta inválido';
+        header('Location: checkout.php');
+        exit();
+    }
 }
 
 // Validar formato de fecha de expiración (MM/AA)
@@ -85,6 +89,15 @@ $tarjetaEnmascarada = '**** **** **** ' . substr($numeroTarjetaLimpio, -4);
 
 // Actualizar información del usuario si se solicitó
 $usuario = getUserById($userId);
+// Si el cliente indicó que usará la tarjeta guardada, validar que coincida con la registrada
+if ($usingSavedCard && isset($usuario['Numero_Tarjeta_Bancaria'])) {
+    if ($numeroTarjeta !== $usuario['Numero_Tarjeta_Bancaria']) {
+        // Si no coincide, considerar que el usuario está proveyendo una nueva tarjeta
+        $usingSavedCard = false;
+        // limpiar la bandera proveniente del formulario por seguridad
+        $_POST['using_saved_card'] = '0';
+    }
+}
 
 if (empty($usuario['Direccion_Postal']) || $updateAddress) {
     updateUserAddress($userId, $direccionEnvio);
